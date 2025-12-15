@@ -15,6 +15,10 @@ import * as bcrypt from 'bcrypt';
 import { loginDataDto } from './dtos/loginDataDto';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshTokenDto } from './dtos/refreshTokenDto';
+import { nanoid } from 'zod';
+import { ResetOTP } from './schema/resetOTP.schema';
+import { MailService } from 'src/services/mail.service';
+import { randomInt } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -23,7 +27,10 @@ export class AuthService {
     private readonly userModel: Model<User>,
     @InjectModel(RefreshToken.name)
     private readonly refreshTokenModel: Model<RefreshToken>,
+    @InjectModel(ResetOTP.name)
+    private readonly resetOTPModel: Model<ResetOTP>,
     private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
   ) {}
 
   async signUp(signUpData: signUpDataDto) {
@@ -144,5 +151,63 @@ export class AuthService {
     );
 
     return { message: 'Password changed successfully' };
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.userModel.findOne({ email: email });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    const OTP = randomInt(100000, 999999).toString();
+    const expiryDate = new Date(Date.now() + 3600 * 1000);
+    const resetOTP = new this.resetOTPModel({
+      userId: user._id,
+      OTP: OTP,
+      expiryDate: expiryDate,
+    });
+    await resetOTP.save();
+    await this.mailService.sendPasswordResetEmail(email, OTP);
+    return { message: 'Password reset OTP sent to your email' };
+  }
+
+  async resetPassword(newPassword: string, OTP: string) {
+    const OTPEntry = await this.resetOTPModel.findOne({
+      OTP: OTP,
+      expiryDate: { $gt: new Date() },
+    });
+    if (!OTPEntry) {
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.userModel.updateOne(
+      { _id: OTPEntry.userId },
+      { $set: { password: hashedPassword } },
+    );
+
+    await this.resetOTPModel.deleteOne({ _id: OTPEntry._id });
+
+    return { message: 'Password has been reset successfully' };
+  }
+
+  async validateToken(token: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(token);
+      const user = await this.userModel
+        .findById(payload.userId)
+        .select('-password');
+      if (!user) {
+        throw new UnauthorizedException('Invalid token : User not found');
+      }
+      return { valid: true, user };
+    } catch {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
+  async getMe(userId: string) {
+    if (!userId) throw new BadRequestException('User ID is required');
+    const user = await this.userModel.findById(userId).select('-password');
+    if (!user) throw new BadRequestException('User not found');
+    return user;
   }
 }
