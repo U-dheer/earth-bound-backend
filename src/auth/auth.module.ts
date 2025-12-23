@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthController } from './authController';
-import { AuthService } from './authService';
+import { AuthService } from './auth.Service';
 import { User, UserSchema } from './schema/user.schema';
 import { RefreshToken, RefreshTokenSchema } from './schema/refreshToken.schema';
 import { JwtModule } from '@nestjs/jwt';

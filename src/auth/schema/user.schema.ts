@@ -13,7 +13,7 @@ export class User extends Document {
   @Prop()
   name: string;
 
-  @Prop()
+  @Prop({ type: String, enum: RolesEnum, default: RolesEnum.USER })
   role: RolesEnum;
 
   @Prop()
@@ -43,7 +43,7 @@ export const UserSchema = SchemaFactory.createForClass(User);
 // Add pre-save hook to handle isActive logic
 UserSchema.pre('save', function (next) {
   if (this.isNew) {
-    if (this.role === RolesEnum.BUSSINESS || this.role === RolesEnum.ORNIZER) {
+    if (this.role === RolesEnum.BUSINESS || this.role === RolesEnum.ORGANIZER) {
       this.isActive = false;
     } else {
       this.isActive = true;

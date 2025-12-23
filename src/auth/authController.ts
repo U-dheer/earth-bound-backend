@@ -1,6 +1,14 @@
-import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { signUpDataDto } from './dtos/signUpDataDto';
-import { AuthService } from './authService';
+import { AuthService } from './auth.Service';
 import { loginDataDto } from './dtos/loginDataDto';
 import { RefreshTokenDto } from './dtos/refreshTokenDto';
 import { ChangePasswordto } from './dtos/changePassword.dto';
@@ -8,6 +16,10 @@ import { RequestUser } from 'src/decorators/request-user.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { forgotPasswordDto } from './dtos/fogotPassword.dto';
 import { ResetPasswordDto } from './dtos/resetPassword.dto';
+import { VerifyBussinessDto } from './dtos/verifyBussiness.dto';
+import { Roles } from 'src/decorators/roles.decorator';
+import { RolesEnum } from './utils/rolesEnum';
+import { RolesGuard } from 'src/guards/roles.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -62,6 +74,35 @@ export class AuthController {
   @Get('me')
   @UseGuards(AuthGuard)
   async me(@RequestUser() userId: string) {
+    console.log('Fetching details for userId:', userId);
     return this.authService.getMe(userId);
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RolesEnum.ADMIN)
+  @Get('getAllBusinesses')
+  async getAllBusinesses() {
+    return this.authService.getAllBusinesses();
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RolesEnum.ADMIN)
+  @Get('getAllBusinesses-notActivated')
+  async getAllBusinessesNotActivated() {
+    return this.authService.getAllBusinessesNotActivated();
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RolesEnum.ADMIN)
+  @Get('getOneBusiness/:businessId')
+  async getOneBusiness(@Param('businessId') businessId: string) {
+    return this.authService.getOneBusiness(businessId);
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RolesEnum.ADMIN)
+  @Post('verify-business/:businessId')
+  async verifyBussiness(@Param('businessId') businessId: string) {
+    return this.authService.verifyBusiness(businessId);
   }
 }

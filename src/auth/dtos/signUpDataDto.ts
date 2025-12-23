@@ -25,7 +25,7 @@ export class signUpDataDto {
   name: string;
 
   @Transform(({ value }) => value?.toUpperCase())
-  @IsIn(['USER', 'ADMIN', 'ORNIZER', 'BUSSINESS'])
+  @IsIn(['USER', 'ADMIN', 'ORNIZER', 'BUSINESS'])
   role: RolesEnum;
 
   @IsOptional()

@@ -76,20 +76,20 @@ export class AuthService {
       throw new BadRequestException('Invalid credentials');
     }
 
-    const tokens = await this.generateTokens(user._id.toString());
+    const tokens = await this.generateTokens(user._id.toString(), user.role);
     return {
       ...tokens,
       userId: user._id,
     };
   }
 
-  async generateTokens(userId: string) {
+  async generateTokens(userId: string, role: string) {
     const accessToken = await this.jwtService.signAsync(
-      { userId },
+      { userId, role },
       { expiresIn: '15m' },
     );
     const refreshToken = await this.jwtService.signAsync(
-      { userId },
+      { userId, role },
       { expiresIn: '7d' },
     );
     await this.storeRefreshToken(userId, refreshToken);
@@ -121,7 +121,12 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    return this.generateTokens(storedRefreashToken.userId);
+    const user = await this.userModel.findById(storedRefreashToken.userId);
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return this.generateTokens(storedRefreashToken.userId, user.role);
   }
 
   async changePassword(
@@ -209,5 +214,44 @@ export class AuthService {
     const user = await this.userModel.findById(userId).select('-password');
     if (!user) throw new BadRequestException('User not found');
     return user;
+  }
+
+  async getmeThroughToken(token: string) {
+    if (!token) throw new BadRequestException('Token is required');
+    const payload = await this.jwtService.verifyAsync(token);
+    const user = await this.userModel
+      .findById(payload.userId)
+      .select('-password');
+    if (!user) throw new BadRequestException('User not found');
+    return user;
+  }
+
+  async getAllBusinesses() {
+    return this.userModel.find({ role: 'BUSINESS' }).select('-password');
+  }
+
+  async getAllBusinessesNotActivated() {
+    return this.userModel
+      .find({ role: 'BUSINESS', isActive: false })
+      .select('-password');
+  }
+
+  async getOneBusiness(businessId: string) {
+    return this.userModel.findById(businessId).select('-password');
+  }
+
+  async verifyBusiness(businessId: string) {
+    const business = await this.userModel.findById(businessId);
+    if (!business) {
+      throw new BadRequestException('Business not found');
+    }
+    if (business.isActive === false) {
+      business.isActive = true;
+    } else {
+      business.isActive = false;
+    }
+
+    await business.save();
+    return { message: 'Business verified successfully' };
   }
 }

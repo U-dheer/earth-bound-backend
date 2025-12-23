@@ -1,6 +1,6 @@
-export const enum RolesEnum {
+export enum RolesEnum {
   USER = 'USER',
   ADMIN = 'ADMIN',
-  ORNIZER = 'ORNIZER',
-  BUSSINESS = 'BUSSINESS',
+  ORGANIZER = 'ORGANIZER',
+  BUSINESS = 'BUSINESS',
 }
