@@ -94,15 +94,29 @@ export class AuthController {
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(RolesEnum.ADMIN)
-  @Get('getOneBusiness/:businessId')
-  async getOneBusiness(@Param('businessId') businessId: string) {
-    return this.authService.getOneBusiness(businessId);
+  @Get('getOneUser/:userId')
+  async getOneUser(@Param('userId') userId: string) {
+    return this.authService.getOneUser(userId);
   }
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(RolesEnum.ADMIN)
-  @Post('verify-business/:businessId')
-  async verifyBussiness(@Param('businessId') businessId: string) {
-    return this.authService.verifyBusiness(businessId);
+  @Post('verify-users/:userId')
+  async verifyBussiness(@Param('userId') userId: string) {
+    return this.authService.verifyBusiness(userId);
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RolesEnum.ADMIN)
+  @Get('getAllOrganizers')
+  async getAllOrganizers() {
+    return this.authService.getAllOrganizers();
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RolesEnum.ADMIN)
+  @Get('getAllOrganizers-notActivated')
+  async getAllOrganizersNotActivated() {
+    return this.authService.getAllOrganizersNotActivated();
   }
 }

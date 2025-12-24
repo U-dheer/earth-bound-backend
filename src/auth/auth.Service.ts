@@ -236,22 +236,32 @@ export class AuthService {
       .select('-password');
   }
 
-  async getOneBusiness(businessId: string) {
-    return this.userModel.findById(businessId).select('-password');
+  async getOneUser(userId: string) {
+    return this.userModel.findById(userId).select('-password');
   }
 
-  async verifyBusiness(businessId: string) {
-    const business = await this.userModel.findById(businessId);
-    if (!business) {
-      throw new BadRequestException('Business not found');
+  async verifyBusiness(userId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new BadRequestException('user not found');
     }
-    if (business.isActive === false) {
-      business.isActive = true;
+    if (user.isActive === false) {
+      user.isActive = true;
     } else {
-      business.isActive = false;
+      user.isActive = false;
     }
 
-    await business.save();
-    return { message: 'Business verified successfully' };
+    await user.save();
+    return { message: 'verified successfully' };
+  }
+
+  async getAllOrganizers() {
+    return this.userModel.find({ role: 'ORGANIZER' }).select('-password');
+  }
+
+  async getAllOrganizersNotActivated() {
+    return this.userModel
+      .find({ role: 'ORGANIZER', isActive: false })
+      .select('-password');
   }
 }
